@@ -1,0 +1,4 @@
+selenium==4.17.2
+beautifulsoup4==4.12.2
+webdriver-manager==4.0.1
+undetected-chromedriver==3.5.4 
