@@ -157,7 +157,7 @@ def random_scroll(driver):
     scroll_height = random.randint(300, 1000)
     driver.execute_script(f"window.scrollBy(0, {scroll_height});")
 
-def extract_tweet_data(article):
+def extract_tweet_data(article, username=None):
     """Extract data from a tweet article element."""
     try:
         # Extract timestamp
@@ -189,6 +189,9 @@ def extract_tweet_data(article):
                     stat_value = re.search(r'\d+', stat_text)
                     stats[stat_type] = int(stat_value.group()) if stat_value else 0
         
+        # Use provided username or global variable
+        user = username if username is not None else TWITTER_USERNAME
+        
         # Add tweet to our list
         tweet_data = {
             'tweet_id': tweet_id,
@@ -197,7 +200,7 @@ def extract_tweet_data(article):
             'replies': stats.get('replies', 0),
             'retweets': stats.get('retweets', 0),
             'likes': stats.get('likes', 0),
-            'url': f"https://twitter.com/{TWITTER_USERNAME}/status/{tweet_id}" if tweet_id != "Unknown" else "Unknown"
+            'url': f"https://twitter.com/{user}/status/{tweet_id}" if tweet_id != "Unknown" else "Unknown"
         }
         
         return tweet_data
@@ -205,13 +208,16 @@ def extract_tweet_data(article):
         print(f"Error extracting tweet data: {e}")
         return None
 
-def scrape_tweets(driver):
+def scrape_tweets(driver, username=None):
     """Scrape tweets by scrolling through the timeline."""
     tweets = []
     unique_tweet_ids = set()  # To check for duplicates based on ID
     unique_tweet_texts = set()  # Fallback for duplicate detection
     scroll_count = 0
     consecutive_no_new_tweets = 0
+    
+    # Use provided username or global variable
+    user = username if username is not None else TWITTER_USERNAME
     
     print(f"Starting to scrape tweets from {TARGET_URL}")
     driver.get(TARGET_URL)
@@ -246,7 +252,7 @@ def scrape_tweets(driver):
         prev_count = len(tweets)
         
         for article in tweet_articles:
-            tweet_data = extract_tweet_data(article)
+            tweet_data = extract_tweet_data(article, user)
             
             if not tweet_data:
                 continue
@@ -313,7 +319,7 @@ def main():
     
     driver = setup_driver()
     try:
-        tweets = scrape_tweets(driver)
+        tweets = scrape_tweets(driver, TWITTER_USERNAME)
         if tweets:
             save_tweets_to_csv(tweets, OUTPUT_FILE)
             print(f"Scraping completed! Total tweets scraped: {len(tweets)}")
